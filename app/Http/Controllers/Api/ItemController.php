@@ -10,7 +10,7 @@ class ItemController extends Controller
 {
     public function index()
     {
-        $items = Item::with('category.itemType')
+        $items = Item::with(['category.itemType', 'supplier'])
             ->latest()
             ->get();
 
@@ -26,6 +26,7 @@ class ItemController extends Controller
         $request->validate([
             'item_id' => 'required|string|max:20|unique:items,item_id',
             'item_category_id' => 'required|integer|exists:item_categories,item_category_id',
+            'supplier_id' => 'nullable|string|exists:suppliers,supplier_id',
             'item_name' => 'required|string|max:100',
             'purchase_price' => 'nullable|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
@@ -36,6 +37,7 @@ class ItemController extends Controller
         $item = Item::create([
             'item_id' => $request->item_id,
             'item_category_id' => $request->item_category_id,
+            'supplier_id' => $request->supplier_id,
             'item_name' => $request->item_name,
             'purchase_price' => $request->purchase_price ?? 0,
             'selling_price' => $request->selling_price,
@@ -52,8 +54,8 @@ class ItemController extends Controller
 
     public function show($id)
     {
-        $item = Item::with('category.itemType')
-            ->findOrFail($id);
+       $item = Item::with(['category.itemType', 'supplier'])
+             ->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -69,6 +71,7 @@ class ItemController extends Controller
         $request->validate([
             'item_category_id' => 'sometimes|required|integer|exists:item_categories,item_category_id',
             'item_name' => 'sometimes|required|string|max:100',
+            'supplier_id' => 'nullable|string|exists:suppliers,supplier_id',
             'purchase_price' => 'nullable|numeric|min:0',
             'selling_price' => 'sometimes|required|numeric|min:0',
             'stock' => 'nullable|integer|min:0',
@@ -78,6 +81,7 @@ class ItemController extends Controller
         $item->update([
             'item_category_id' => $request->item_category_id ?? $item->item_category_id,
             'item_name' => $request->item_name ?? $item->item_name,
+            'supplier_id' => $request->supplier_id ?? $item->supplier_id,
             'purchase_price' => $request->purchase_price ?? $item->purchase_price,
             'selling_price' => $request->selling_price ?? $item->selling_price,
             'stock' => $request->stock ?? $item->stock,

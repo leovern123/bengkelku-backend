@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
-
+use App\Http\Controllers\Api\SupplierController;
 
 Route::apiResource('customers', CustomerController::class);
 Route::apiResource('vehicles', VehicleController::class);
@@ -30,3 +30,5 @@ Route::get('reports/income', [ReportController::class, 'income']);
 Route::get('reports/expenses', [ReportController::class, 'expenses']);
 Route::get('reports/profit', [ReportController::class, 'profit']);
 Route::get('reports/stock', [ReportController::class, 'stock']);
+
+Route::apiResource('suppliers', SupplierController::class);
