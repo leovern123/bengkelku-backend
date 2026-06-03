@@ -39,29 +39,29 @@ class PaymentController extends Controller
             'payment_date' => 'nullable|date',
         ]);
 
+        $order = Order::findOrFail($request->order_id);
+
+        if ($order->order_status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order yang sudah dibatalkan tidak bisa dibayar'
+            ], 422);
+        }
+
+        if ($request->paid_amount < $order->total_amount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jumlah bayar kurang dari total order',
+                'total_amount' => $order->total_amount,
+                'paid_amount' => $request->paid_amount
+            ], 422);
+        }
+
+        $changeAmount = $request->paid_amount - $order->total_amount;
+
         DB::beginTransaction();
 
         try {
-            $order = Order::findOrFail($request->order_id);
-
-            if ($order->order_status === 'cancelled') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Order yang sudah dibatalkan tidak bisa dibayar'
-                ], 422);
-            }
-
-            if ($request->paid_amount < $order->total_amount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jumlah bayar kurang dari total order',
-                    'total_amount' => $order->total_amount,
-                    'paid_amount' => $request->paid_amount
-                ], 422);
-            }
-
-            $changeAmount = $request->paid_amount - $order->total_amount;
-
             $payment = Payment::create([
                 'payment_id' => $request->payment_id,
                 'order_id' => $request->order_id,
@@ -131,37 +131,46 @@ class PaymentController extends Controller
             'payment_date' => 'nullable|date',
         ]);
 
+        $order = Order::with('details.item')->findOrFail($payment->order_id);
+
+        $paidAmount = $request->paid_amount ?? $payment->paid_amount;
+        $newStatus = $request->payment_status ?? $payment->payment_status;
+
+        if ($paidAmount < $order->total_amount && $newStatus === 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Jumlah bayar kurang dari total order'
+            ], 422);
+        }
+
+        $changeAmount = $paidAmount - $order->total_amount;
+
         DB::beginTransaction();
 
         try {
-            $order = Order::findOrFail($payment->order_id);
-
-            $paidAmount = $request->paid_amount ?? $payment->paid_amount;
-
-            if ($paidAmount < $order->total_amount && ($request->payment_status ?? $payment->payment_status) === 'paid') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jumlah bayar kurang dari total order'
-                ], 422);
-            }
-
-            $changeAmount = $paidAmount - $order->total_amount;
-
             $payment->update([
                 'payment_method' => $request->payment_method ?? $payment->payment_method,
                 'paid_amount' => $paidAmount,
                 'change_amount' => $changeAmount,
-                'payment_status' => $request->payment_status ?? $payment->payment_status,
+                'payment_status' => $newStatus,
                 'payment_date' => $request->payment_date ?? $payment->payment_date,
             ]);
 
-            if ($payment->payment_status === 'paid') {
+            if ($newStatus === 'paid') {
                 $order->update([
                     'order_status' => 'completed',
                 ]);
             }
 
-            if ($payment->payment_status === 'cancelled') {
+            if ($newStatus === 'cancelled') {
+                foreach ($order->details as $detail) {
+                    $item = $detail->item;
+                    if ($item && $item->stock !== null) {
+                        $item->stock += $detail->quantity;
+                        $item->save();
+                    }
+                }
+
                 $order->update([
                     'order_status' => 'process',
                 ]);

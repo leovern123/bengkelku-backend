@@ -15,6 +15,7 @@ class Item extends Model
     protected $fillable = [
         'item_id',
         'item_category_id',
+        'supplier_id',
         'item_name',
         'purchase_price',
         'selling_price',

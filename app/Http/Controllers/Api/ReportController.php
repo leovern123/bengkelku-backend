@@ -13,7 +13,10 @@ class ReportController extends Controller
 {
     public function summary()
     {
-        $totalIncome = Payment::where('payment_status', 'paid')->sum('paid_amount');
+        $totalIncome = Payment::with('order')
+            ->where('payment_status', 'paid')
+            ->get()
+            ->sum(fn($p) => $p->order->total_amount ?? 0);
         $totalExpenses = Expense::sum('amount');
         $totalProfit = $totalIncome - $totalExpenses;
 
@@ -59,7 +62,7 @@ class ReportController extends Controller
         }
 
         $payments = $query->latest()->get();
-        $total = $payments->sum('paid_amount');
+        $total = $payments->sum(fn($p) => $p->order->total_amount ?? 0);
 
         return response()->json([
             'success' => true,
@@ -112,7 +115,7 @@ class ReportController extends Controller
             ]);
         }
 
-        $totalIncome = $incomeQuery->sum('paid_amount');
+        $totalIncome = $incomeQuery->with('order')->get()->sum(fn($p) => $p->order->total_amount ?? 0);
         $totalExpenses = $expenseQuery->sum('amount');
 
         return response()->json([

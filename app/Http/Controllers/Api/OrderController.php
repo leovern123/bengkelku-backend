@@ -215,6 +215,20 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
 
+        if ($order->order_status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order yang sudah dibatalkan tidak bisa diselesaikan'
+            ], 422);
+        }
+
+        if ($order->order_status === 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order sudah selesai'
+            ], 422);
+        }
+
         $order->update([
             'order_status' => 'completed',
         ]);
@@ -229,6 +243,13 @@ class OrderController extends Controller
     public function cancel($id)
     {
         $order = Order::with('details.item')->findOrFail($id);
+
+        if (in_array($order->order_status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order dengan status ' . $order->order_status . ' tidak bisa dibatalkan'
+            ], 422);
+        }
 
         DB::beginTransaction();
 
