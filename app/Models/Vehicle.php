@@ -18,7 +18,6 @@ class Vehicle extends Model
         'license_plate',
         'brand',
         'model',
-        'year',
     ];
 
     public function customer()

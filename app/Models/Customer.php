@@ -15,8 +15,6 @@ class Customer extends Model
     protected $fillable = [
         'customer_id',
         'customer_name',
-        'phone_number',
-        'note',
     ];
 
     public function vehicles()

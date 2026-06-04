@@ -29,7 +29,6 @@ class VehicleController extends Controller
             'license_plate' => 'required|string|max:20|unique:vehicles,license_plate',
             'brand' => 'nullable|string|max:50',
             'model' => 'nullable|string|max:50',
-            'year' => 'nullable|integer|min:1900|max:' . date('Y'),
         ]);
 
         $vehicle = Vehicle::create([
@@ -38,7 +37,6 @@ class VehicleController extends Controller
             'license_plate' => $request->license_plate,
             'brand' => $request->brand,
             'model' => $request->model,
-            'year' => $request->year,
         ]);
 
         return response()->json([
@@ -68,7 +66,6 @@ class VehicleController extends Controller
             'license_plate' => 'sometimes|required|string|max:20|unique:vehicles,license_plate,' . $id . ',vehicle_id',
             'brand' => 'nullable|string|max:50',
             'model' => 'nullable|string|max:50',
-            'year' => 'nullable|integer|min:1900|max:' . date('Y'),
         ]);
 
         $vehicle->update([
@@ -76,7 +73,6 @@ class VehicleController extends Controller
             'license_plate' => $request->license_plate ?? $vehicle->license_plate,
             'brand' => $request->brand ?? $vehicle->brand,
             'model' => $request->model ?? $vehicle->model,
-            'year' => $request->year ?? $vehicle->year,
         ]);
 
         return response()->json([

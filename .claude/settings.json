@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sshpass -p 'Bengkel24@e' ssh -o StrictHostKeyChecking=no root@202.155.95.224 \"echo 'Koneksi berhasil' && lsb_release -a && php -v 2>/dev/null || echo 'PHP belum terinstall'\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\User\\.claude\\projects\\c--Users-User-flutter-bengkelku-bengkelku-backend"
+    ]
+  }
+}
