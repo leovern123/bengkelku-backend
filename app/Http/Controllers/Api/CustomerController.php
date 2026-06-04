@@ -21,15 +21,25 @@ class CustomerController extends Controller
         ]);
     }
 
+    private function generateCustomerId(): string
+    {
+        $last = Customer::where('customer_id', 'like', 'CU%')
+            ->orderBy('customer_id', 'desc')
+            ->first();
+
+        $number = $last ? ((int) substr($last->customer_id, 2)) + 1 : 1;
+
+        return 'CU' . str_pad($number, 3, '0', STR_PAD_LEFT);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|string|max:20|unique:customers,customer_id',
             'customer_name' => 'required|string|max:100',
         ]);
 
         $customer = Customer::create([
-            'customer_id' => $request->customer_id,
+            'customer_id' => $this->generateCustomerId(),
             'customer_name' => $request->customer_name,
         ]);
 
