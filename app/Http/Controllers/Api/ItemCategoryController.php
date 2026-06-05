@@ -21,16 +21,21 @@ class ItemCategoryController extends Controller
         ]);
     }
 
+    private function generateCategoryId(): int
+    {
+        $last = ItemCategory::orderBy('item_category_id', 'desc')->first();
+        return $last ? $last->item_category_id + 1 : 1;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'item_category_id' => 'required|integer|unique:item_categories,item_category_id',
             'item_type_id' => 'required|integer|exists:item_types,item_type_id',
             'category_name' => 'required|string|max:100',
         ]);
 
         $category = ItemCategory::create([
-            'item_category_id' => $request->item_category_id,
+            'item_category_id' => $this->generateCategoryId(),
             'item_type_id' => $request->item_type_id,
             'category_name' => $request->category_name,
         ]);
