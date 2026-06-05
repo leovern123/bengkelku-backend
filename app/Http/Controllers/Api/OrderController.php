@@ -43,24 +43,45 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'customer_id' => 'required|string|exists:customers,customer_id',
-            'vehicle_id' => 'required|string|exists:vehicles,vehicle_id',
-            'user_id' => 'required|string|exists:users,user_id',
-            'mechanic_id' => 'nullable|string|exists:mechanics,mechanic_id',
-            'order_status' => 'nullable|in:pending,process,completed,cancelled',
+            'transaction_type' => 'nullable|in:service,product_sale',
+            'customer_id'      => 'nullable|string|exists:customers,customer_id',
+            'vehicle_id'       => 'nullable|string|exists:vehicles,vehicle_id',
+            'user_id'          => 'required|string|exists:users,user_id',
+            'mechanic_id'      => 'nullable|string|exists:mechanics,mechanic_id',
+            'order_status'     => 'nullable|in:pending,process,completed,cancelled',
         ]);
+
+        $transactionType = $request->transaction_type ?? 'service';
+
+        if ($transactionType === 'service') {
+            if (empty($request->customer_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors'  => ['customer_id' => ['Customer wajib diisi untuk servis kendaraan']],
+                ], 422);
+            }
+            if (empty($request->vehicle_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors'  => ['vehicle_id' => ['Kendaraan wajib diisi untuk servis kendaraan']],
+                ], 422);
+            }
+        }
 
         $orderId = $this->generateOrderId();
 
         $order = Order::create([
-            'order_id' => $orderId,
-            'customer_id' => $request->customer_id,
-            'vehicle_id' => $request->vehicle_id,
-            'user_id' => $request->user_id,
-            'mechanic_id' => $request->mechanic_id,
-            'order_code' => 'WO-' . $orderId,
-            'order_status' => $request->order_status ?? 'pending',
-            'total_amount' => 0,
+            'order_id'         => $orderId,
+            'transaction_type' => $transactionType,
+            'customer_id'      => $request->customer_id ?: null,
+            'vehicle_id'       => $request->vehicle_id ?: null,
+            'user_id'          => $request->user_id,
+            'mechanic_id'      => $request->mechanic_id,
+            'order_code'       => 'WO-' . $orderId,
+            'order_status'     => $request->order_status ?? 'pending',
+            'total_amount'     => 0,
         ]);
 
         try {

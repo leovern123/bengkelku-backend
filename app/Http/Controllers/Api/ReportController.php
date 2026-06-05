@@ -151,7 +151,7 @@ class ReportController extends Controller
 
     public function transactions(Request $request)
     {
-        $query = Order::with(['customer', 'vehicle', 'payment'])
+        $query = Order::with(['customer', 'vehicle', 'payment', 'user'])
             ->withCount('details as item_count');
 
         if ($request->start_date && $request->end_date) {
