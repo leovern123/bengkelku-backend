@@ -8,6 +8,15 @@ use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
+    private function generateItemId(): string
+    {
+        $last = Item::where('item_id', 'like', 'ITM%')
+            ->orderBy('item_id', 'desc')
+            ->first();
+        $number = $last ? ((int) substr($last->item_id, 3)) + 1 : 1;
+        return 'ITM' . str_pad($number, 3, '0', STR_PAD_LEFT);
+    }
+
     public function index()
     {
         $items = Item::with(['category.itemType', 'supplier'])
@@ -24,7 +33,6 @@ class ItemController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|string|max:20|unique:items,item_id',
             'item_category_id' => 'required|integer|exists:item_categories,item_category_id',
             'supplier_id' => 'nullable|string|exists:suppliers,supplier_id',
             'item_name' => 'required|string|max:100',
@@ -35,7 +43,7 @@ class ItemController extends Controller
         ]);
 
         $item = Item::create([
-            'item_id' => $request->item_id,
+            'item_id' => $this->generateItemId(),
             'item_category_id' => $request->item_category_id,
             'supplier_id' => $request->supplier_id,
             'item_name' => $request->item_name,
