@@ -21,26 +21,31 @@ class ExpenseController extends Controller
         ]);
     }
 
+    private function generateExpenseId(): string
+    {
+        $last = Expense::orderByRaw("CAST(SUBSTRING(expense_id, 4) AS UNSIGNED) DESC")->first();
+        $next = $last ? ((int) substr($last->expense_id, 3)) + 1 : 1;
+        return 'EXP' . str_pad($next, 3, '0', STR_PAD_LEFT);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'expense_id' => 'required|string|max:20|unique:expenses,expense_id',
-            'user_id' => 'required|string|exists:users,user_id',
-            'expense_name' => 'required|string|max:100',
+            'expense_name'     => 'required|string|max:100',
             'expense_category' => 'nullable|string|max:100',
-            'amount' => 'required|numeric|min:0',
-            'expense_date' => 'required|date',
-            'note' => 'nullable|string',
+            'amount'           => 'required|numeric|min:0',
+            'expense_date'     => 'required|date',
+            'note'             => 'nullable|string',
         ]);
 
         $expense = Expense::create([
-            'expense_id' => $request->expense_id,
-            'user_id' => $request->user_id,
-            'expense_name' => $request->expense_name,
+            'expense_id'       => $this->generateExpenseId(),
+            'user_id'          => auth()->id(),
+            'expense_name'     => $request->expense_name,
             'expense_category' => $request->expense_category,
-            'amount' => $request->amount,
-            'expense_date' => $request->expense_date,
-            'note' => $request->note,
+            'amount'           => $request->amount,
+            'expense_date'     => $request->expense_date,
+            'note'             => $request->note,
         ]);
 
         return response()->json([
