@@ -149,6 +149,144 @@ class ReportController extends Controller
         ]);
     }
 
+    public function chart(Request $request)
+    {
+        $period = $request->get('period', 'monthly');
+        $year   = (int) $request->get('year', now()->year);
+        $month  = (int) $request->get('month', now()->month);
+
+        $data = match ($period) {
+            'daily'  => $this->chartDaily($year, $month),
+            'yearly' => $this->chartYearly(),
+            default  => $this->chartMonthly($year),
+        };
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    private function chartDaily(int $year, int $month): array
+    {
+        $income = DB::table('payments as p')
+            ->join('orders as o', 'o.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->whereYear('p.payment_date', $year)
+            ->whereMonth('p.payment_date', $month)
+            ->selectRaw('DAY(p.payment_date) as k, SUM(o.total_amount) as v')
+            ->groupByRaw('DAY(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $modal = DB::table('payments as p')
+            ->join('order_details as od', 'od.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->whereYear('p.payment_date', $year)
+            ->whereMonth('p.payment_date', $month)
+            ->selectRaw('DAY(p.payment_date) as k, SUM(od.quantity * od.purchase_price_at_transaction) as v')
+            ->groupByRaw('DAY(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $expenses = DB::table('expenses')
+            ->whereYear('expense_date', $year)
+            ->whereMonth('expense_date', $month)
+            ->selectRaw('DAY(expense_date) as k, SUM(amount) as v')
+            ->groupByRaw('DAY(expense_date)')
+            ->pluck('v', 'k');
+
+        $days = (int) date('t', mktime(0, 0, 0, $month, 1, $year));
+        $result = [];
+        for ($d = 1; $d <= $days; $d++) {
+            $result[] = [
+                'label'    => (string) $d,
+                'income'   => (float) ($income[$d] ?? 0),
+                'modal'    => (float) ($modal[$d] ?? 0),
+                'expenses' => (float) ($expenses[$d] ?? 0),
+            ];
+        }
+        return $result;
+    }
+
+    private function chartMonthly(int $year): array
+    {
+        $labels = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+        $income = DB::table('payments as p')
+            ->join('orders as o', 'o.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->whereYear('p.payment_date', $year)
+            ->selectRaw('MONTH(p.payment_date) as k, SUM(o.total_amount) as v')
+            ->groupByRaw('MONTH(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $modal = DB::table('payments as p')
+            ->join('order_details as od', 'od.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->whereYear('p.payment_date', $year)
+            ->selectRaw('MONTH(p.payment_date) as k, SUM(od.quantity * od.purchase_price_at_transaction) as v')
+            ->groupByRaw('MONTH(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $expenses = DB::table('expenses')
+            ->whereYear('expense_date', $year)
+            ->selectRaw('MONTH(expense_date) as k, SUM(amount) as v')
+            ->groupByRaw('MONTH(expense_date)')
+            ->pluck('v', 'k');
+
+        $result = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $result[] = [
+                'label'    => $labels[$m - 1],
+                'income'   => (float) ($income[$m] ?? 0),
+                'modal'    => (float) ($modal[$m] ?? 0),
+                'expenses' => (float) ($expenses[$m] ?? 0),
+            ];
+        }
+        return $result;
+    }
+
+    private function chartYearly(): array
+    {
+        $income = DB::table('payments as p')
+            ->join('orders as o', 'o.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->selectRaw('YEAR(p.payment_date) as k, SUM(o.total_amount) as v')
+            ->groupByRaw('YEAR(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $modal = DB::table('payments as p')
+            ->join('order_details as od', 'od.order_id', '=', 'p.order_id')
+            ->where('p.payment_status', 'paid')
+            ->selectRaw('YEAR(p.payment_date) as k, SUM(od.quantity * od.purchase_price_at_transaction) as v')
+            ->groupByRaw('YEAR(p.payment_date)')
+            ->pluck('v', 'k');
+
+        $expenses = DB::table('expenses')
+            ->selectRaw('YEAR(expense_date) as k, SUM(amount) as v')
+            ->groupByRaw('YEAR(expense_date)')
+            ->pluck('v', 'k');
+
+        $years = collect(
+            array_unique(array_merge(
+                $income->keys()->toArray(),
+                $modal->keys()->toArray(),
+                $expenses->keys()->toArray()
+            ))
+        )->sort()->values();
+
+        if ($years->isEmpty()) {
+            $years = collect([now()->year]);
+        }
+
+        $result = [];
+        foreach ($years as $y) {
+            $result[] = [
+                'label'    => (string) $y,
+                'income'   => (float) ($income[$y] ?? 0),
+                'modal'    => (float) ($modal[$y] ?? 0),
+                'expenses' => (float) ($expenses[$y] ?? 0),
+            ];
+        }
+        return $result;
+    }
+
     public function stock()
     {
         $items = Item::with('category.itemType')
