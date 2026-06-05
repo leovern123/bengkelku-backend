@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             ItemTypeSeeder::class,
             UserSeeder::class,
             ItemCategorySeeder::class,
+            SupplierSeeder::class,
             ItemSeeder::class,
         ]);
     }
