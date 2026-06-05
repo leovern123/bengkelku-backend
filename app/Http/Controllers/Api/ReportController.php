@@ -4,21 +4,29 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderDetail;
 use App\Models\Payment;
 use App\Models\Expense;
 use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
-    public function summary()
+    public function summary(Request $request)
     {
-        $totalIncome = Payment::with('order')
-            ->where('payment_status', 'paid')
-            ->get()
-            ->sum(fn($p) => $p->order->total_amount ?? 0);
+        $paidOrderIds = Payment::where('payment_status', 'paid')
+            ->pluck('order_id');
+
+        $totalIncome = Order::whereIn('order_id', $paidOrderIds)->sum('total_amount');
+
+        $totalModal = OrderDetail::whereIn('order_id', $paidOrderIds)
+            ->sum(DB::raw('quantity * purchase_price_at_transaction'));
+
         $totalExpenses = Expense::sum('amount');
-        $totalProfit = $totalIncome - $totalExpenses;
+
+        $labaKotor = $totalIncome - $totalModal;
+        $labaBersih = $labaKotor - $totalExpenses;
 
         $totalOrders = Order::count();
         $completedOrders = Order::where('order_status', 'completed')->count();
@@ -34,14 +42,16 @@ class ReportController extends Controller
             'success' => true,
             'message' => 'Ringkasan laporan berhasil diambil',
             'data' => [
-                'total_income' => $totalIncome,
-                'total_expenses' => $totalExpenses,
-                'total_profit' => $totalProfit,
+                'total_income'   => (float) $totalIncome,
+                'total_modal'    => (float) $totalModal,
+                'total_expenses' => (float) $totalExpenses,
+                'laba_kotor'     => (float) $labaKotor,
+                'laba_bersih'    => (float) $labaBersih,
                 'orders' => [
-                    'total' => $totalOrders,
+                    'total'     => $totalOrders,
                     'completed' => $completedOrders,
-                    'process' => $processOrders,
-                    'pending' => $pendingOrders,
+                    'process'   => $processOrders,
+                    'pending'   => $pendingOrders,
                     'cancelled' => $cancelledOrders,
                 ],
                 'low_stock_items' => $lowStockItems,
@@ -108,23 +118,33 @@ class ReportController extends Controller
                 $request->start_date . ' 00:00:00',
                 $request->end_date . ' 23:59:59',
             ]);
-
             $expenseQuery->whereBetween('expense_date', [
                 $request->start_date,
                 $request->end_date,
             ]);
         }
 
-        $totalIncome = $incomeQuery->with('order')->get()->sum(fn($p) => $p->order->total_amount ?? 0);
+        $paidOrderIds = (clone $incomeQuery)->pluck('order_id');
+
+        $totalIncome = Order::whereIn('order_id', $paidOrderIds)->sum('total_amount');
+
+        $totalModal = OrderDetail::whereIn('order_id', $paidOrderIds)
+            ->sum(DB::raw('quantity * purchase_price_at_transaction'));
+
         $totalExpenses = $expenseQuery->sum('amount');
+
+        $labaKotor = $totalIncome - $totalModal;
+        $labaBersih = $labaKotor - $totalExpenses;
 
         return response()->json([
             'success' => true,
             'message' => 'Laporan keuntungan berhasil diambil',
             'data' => [
-                'total_income' => $totalIncome,
-                'total_expenses' => $totalExpenses,
-                'total_profit' => $totalIncome - $totalExpenses,
+                'total_income'   => (float) $totalIncome,
+                'total_modal'    => (float) $totalModal,
+                'total_expenses' => (float) $totalExpenses,
+                'laba_kotor'     => (float) $labaKotor,
+                'laba_bersih'    => (float) $labaBersih,
             ]
         ]);
     }
