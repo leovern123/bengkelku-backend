@@ -29,6 +29,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('items/{item}', [ItemController::class, 'show']);
 
     Route::apiResource('orders', OrderController::class);
+    Route::post('orders/{id}/process', [OrderController::class, 'process']);
     Route::post('orders/{id}/complete', [OrderController::class, 'complete']);
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
 

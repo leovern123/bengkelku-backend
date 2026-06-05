@@ -172,6 +172,26 @@ class OrderController extends Controller
         }
     }
 
+    public function process($id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->order_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya order dengan status pending yang bisa diproses'
+            ], 422);
+        }
+
+        $order->update(['order_status' => 'process']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order sedang diproses',
+            'data' => $order
+        ]);
+    }
+
     public function complete($id)
     {
         $order = Order::findOrFail($id);
