@@ -19,10 +19,16 @@ class MechanicController extends Controller
         ]);
     }
 
+    private function generateMechanicId(): string
+    {
+        $last = Mechanic::orderBy('mechanic_id', 'desc')->first();
+        $num = $last ? (int) substr($last->mechanic_id, 3) + 1 : 1;
+        return 'MCN' . str_pad($num, 3, '0', STR_PAD_LEFT);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'mechanic_id' => 'required|string|max:20|unique:mechanics,mechanic_id',
             'mechanic_name' => 'required|string|max:100',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -30,7 +36,7 @@ class MechanicController extends Controller
         ]);
 
         $mechanic = Mechanic::create([
-            'mechanic_id' => $request->mechanic_id,
+            'mechanic_id' => $this->generateMechanicId(),
             'mechanic_name' => $request->mechanic_name,
             'phone_number' => $request->phone_number,
             'address' => $request->address,
