@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    private function generateOrderId(): string
+    {
+        $last = Order::where('order_id', 'like', 'ORD%')
+            ->orderBy('order_id', 'desc')
+            ->first();
+        $number = $last ? ((int) substr($last->order_id, 3)) + 1 : 1;
+        return 'ORD' . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+
     public function index()
     {
         $orders = Order::with([
@@ -34,79 +43,33 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'order_id' => 'required|string|max:20|unique:orders,order_id',
             'customer_id' => 'required|string|exists:customers,customer_id',
             'vehicle_id' => 'required|string|exists:vehicles,vehicle_id',
             'user_id' => 'required|string|exists:users,user_id',
             'mechanic_id' => 'nullable|string|exists:mechanics,mechanic_id',
-            'order_code' => 'required|string|max:50|unique:orders,order_code',
             'order_status' => 'nullable|in:pending,process,completed,cancelled',
-            'details' => 'required|array|min:1',
-            'details.*.order_detail_id' => 'required|string|max:20|distinct|unique:order_details,order_detail_id',
-            'details.*.item_id' => 'required|string|exists:items,item_id',
-            'details.*.quantity' => 'required|integer|min:1',
         ]);
 
-        DB::beginTransaction();
+        $orderId = $this->generateOrderId();
+
+        $order = Order::create([
+            'order_id' => $orderId,
+            'customer_id' => $request->customer_id,
+            'vehicle_id' => $request->vehicle_id,
+            'user_id' => $request->user_id,
+            'mechanic_id' => $request->mechanic_id,
+            'order_code' => 'WO-' . $orderId,
+            'order_status' => $request->order_status ?? 'pending',
+            'total_amount' => 0,
+        ]);
 
         try {
-            $totalAmount = 0;
-
-            $order = Order::create([
-                'order_id' => $request->order_id,
-                'customer_id' => $request->customer_id,
-                'vehicle_id' => $request->vehicle_id,
-                'user_id' => $request->user_id,
-                'mechanic_id' => $request->mechanic_id,
-                'order_code' => $request->order_code,
-                'order_status' => $request->order_status ?? 'pending',
-                'total_amount' => 0,
-            ]);
-
-            foreach ($request->details as $detail) {
-                $item = Item::with('category.itemType')->findOrFail($detail['item_id']);
-
-                $quantity = $detail['quantity'];
-                $purchasePrice = $item->purchase_price;
-                $sellingPrice = $item->selling_price;
-                $subtotal = $sellingPrice * $quantity;
-
-                OrderDetail::create([
-                    'order_detail_id' => $detail['order_detail_id'],
-                    'order_id' => $order->order_id,
-                    'item_id' => $item->item_id,
-                    'quantity' => $quantity,
-                    'purchase_price_at_transaction' => $purchasePrice,
-                    'selling_price_at_transaction' => $sellingPrice,
-                    'subtotal' => $subtotal,
-                ]);
-
-                $totalAmount += $subtotal;
-
-                // Kurangi stok hanya jika item punya stok.
-                // Item jenis service biasanya stock = null.
-                if (!is_null($item->stock)) {
-                    if ($item->stock < $quantity) {
-                        throw new \Exception("Stok item {$item->item_name} tidak cukup");
-                    }
-
-                    $item->stock -= $quantity;
-                    $item->save();
-                }
-            }
-
-            $order->update([
-                'total_amount' => $totalAmount,
-            ]);
-
-            DB::commit();
-
             $order->load([
                 'customer',
                 'vehicle',
                 'user',
                 'mechanic',
-                'details.item.category.itemType',
+                'details.item',
                 'payment'
             ]);
 
@@ -117,8 +80,6 @@ class OrderController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => 'Order gagal dibuat',

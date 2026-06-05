@@ -8,11 +8,18 @@ use Illuminate\Http\Request;
 
 class VehicleController extends Controller
 {
+    private function generateVehicleId(): string
+    {
+        $last = Vehicle::where('vehicle_id', 'like', 'VH%')
+            ->orderBy('vehicle_id', 'desc')
+            ->first();
+        $number = $last ? ((int) substr($last->vehicle_id, 2)) + 1 : 1;
+        return 'VH' . str_pad($number, 3, '0', STR_PAD_LEFT);
+    }
+
     public function index()
     {
-        $vehicles = Vehicle::with('customer')
-            ->latest()
-            ->get();
+        $vehicles = Vehicle::with('customer')->latest()->get();
 
         return response()->json([
             'success' => true,
@@ -24,7 +31,6 @@ class VehicleController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'vehicle_id' => 'required|string|max:20|unique:vehicles,vehicle_id',
             'customer_id' => 'required|string|exists:customers,customer_id',
             'license_plate' => 'required|string|max:20|unique:vehicles,license_plate',
             'brand' => 'nullable|string|max:50',
@@ -32,12 +38,14 @@ class VehicleController extends Controller
         ]);
 
         $vehicle = Vehicle::create([
-            'vehicle_id' => $request->vehicle_id,
+            'vehicle_id' => $this->generateVehicleId(),
             'customer_id' => $request->customer_id,
             'license_plate' => $request->license_plate,
             'brand' => $request->brand,
             'model' => $request->model,
         ]);
+
+        $vehicle->load('customer');
 
         return response()->json([
             'success' => true,

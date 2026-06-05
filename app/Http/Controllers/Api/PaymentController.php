@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
+    private function generatePaymentId(): string
+    {
+        $last = Payment::where('payment_id', 'like', 'PAY%')
+            ->orderBy('payment_id', 'desc')
+            ->first();
+        $number = $last ? ((int) substr($last->payment_id, 3)) + 1 : 1;
+        return 'PAY' . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
+
     public function index()
     {
         $payments = Payment::with([
@@ -32,7 +41,6 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'payment_id' => 'required|string|max:20|unique:payments,payment_id',
             'order_id' => 'required|string|exists:orders,order_id|unique:payments,order_id',
             'payment_method' => 'required|in:cash,qris,transfer,debit',
             'paid_amount' => 'required|numeric|min:0',
@@ -63,7 +71,7 @@ class PaymentController extends Controller
 
         try {
             $payment = Payment::create([
-                'payment_id' => $request->payment_id,
+                'payment_id' => $this->generatePaymentId(),
                 'order_id' => $request->order_id,
                 'payment_method' => $request->payment_method,
                 'paid_amount' => $request->paid_amount,

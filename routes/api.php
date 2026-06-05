@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\OrderDetailController;
 
 Route::post('login', [AuthController::class, 'login']);
 
@@ -32,6 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('orders/{id}/cancel', [OrderController::class, 'cancel']);
 
     Route::apiResource('payments', PaymentController::class);
+
+    Route::post('order-details', [OrderDetailController::class, 'store']);
+    Route::put('order-details/{id}', [OrderDetailController::class, 'update']);
+    Route::delete('order-details/{id}', [OrderDetailController::class, 'destroy']);
 
     // Admin saja
     Route::middleware('role:admin')->group(function () {
