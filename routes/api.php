@@ -28,6 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('items', [ItemController::class, 'index']);
     Route::get('items/{item}', [ItemController::class, 'show']);
 
+    // Read-only untuk kasir
+    Route::get('mechanics', [MechanicController::class, 'index']);
+    Route::get('item-categories', [ItemCategoryController::class, 'index']);
+
     Route::apiResource('orders', OrderController::class);
     Route::post('orders/{id}/process', [OrderController::class, 'process']);
     Route::post('orders/{id}/complete', [OrderController::class, 'complete']);
@@ -41,9 +45,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin saja
     Route::middleware('role:admin')->group(function () {
-        Route::apiResource('mechanics', MechanicController::class);
+        Route::post('mechanics', [MechanicController::class, 'store']);
+        Route::put('mechanics/{mechanic}', [MechanicController::class, 'update']);
+        Route::patch('mechanics/{mechanic}', [MechanicController::class, 'update']);
+        Route::delete('mechanics/{mechanic}', [MechanicController::class, 'destroy']);
+
         Route::apiResource('suppliers', SupplierController::class);
-        Route::apiResource('item-categories', ItemCategoryController::class);
+
+        Route::post('item-categories', [ItemCategoryController::class, 'store']);
+        Route::put('item-categories/{itemCategory}', [ItemCategoryController::class, 'update']);
+        Route::patch('item-categories/{itemCategory}', [ItemCategoryController::class, 'update']);
+        Route::delete('item-categories/{itemCategory}', [ItemCategoryController::class, 'destroy']);
 
         Route::post('items', [ItemController::class, 'store']);
         Route::put('items/{item}', [ItemController::class, 'update']);
