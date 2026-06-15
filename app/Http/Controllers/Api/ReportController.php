@@ -318,4 +318,41 @@ class ReportController extends Controller
             'data' => $items
         ]);
     }
+
+    public function favorites(Request $request)
+    {
+        $paidQuery = Payment::where('payment_status', 'paid');
+
+        if ($request->start_date && $request->end_date) {
+            $paidQuery->whereBetween('payment_date', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59',
+            ]);
+        }
+
+        $paidOrderIds = $paidQuery->pluck('order_id');
+
+        $data = DB::table('order_details as od')
+            ->join('items as i', 'i.item_id', '=', 'od.item_id')
+            ->join('categories as c', 'c.category_id', '=', 'i.category_id')
+            ->join('item_types as t', 't.type_id', '=', 'c.type_id')
+            ->whereIn('od.order_id', $paidOrderIds)
+            ->select(
+                'i.item_id',
+                'i.item_name',
+                'c.category_name',
+                't.type_name',
+                DB::raw('SUM(od.quantity) as total_qty'),
+                DB::raw('SUM(od.quantity * od.selling_price_at_transaction) as total_revenue')
+            )
+            ->groupBy('i.item_id', 'i.item_name', 'c.category_name', 't.type_name')
+            ->orderByDesc('total_qty')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk favorit berhasil diambil',
+            'data' => $data,
+        ]);
+    }
 }
