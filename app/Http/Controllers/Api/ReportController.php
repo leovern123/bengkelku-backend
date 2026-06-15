@@ -334,8 +334,8 @@ class ReportController extends Controller
 
         $data = DB::table('order_details as od')
             ->join('items as i', 'i.item_id', '=', 'od.item_id')
-            ->join('categories as c', 'c.category_id', '=', 'i.category_id')
-            ->join('item_types as t', 't.type_id', '=', 'c.type_id')
+            ->join('item_categories as c', 'c.item_category_id', '=', 'i.item_category_id')
+            ->join('item_types as t', 't.item_type_id', '=', 'c.item_type_id')
             ->whereIn('od.order_id', $paidOrderIds)
             ->select(
                 'i.item_id',
