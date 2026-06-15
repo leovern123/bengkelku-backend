@@ -15,9 +15,11 @@ class Mechanic extends Model
     protected $fillable = [
         'mechanic_id',
         'mechanic_name',
+        'nik',
         'phone_number',
         'address',
         'specialization',
+        'notes',
     ];
 
     public function orders()

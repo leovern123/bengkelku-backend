@@ -30,13 +30,17 @@ class MechanicController extends Controller
     {
         $request->validate([
             'mechanic_name' => 'required|string|max:100',
+            'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
         ]);
 
         $mechanic = Mechanic::create([
             'mechanic_id' => $this->generateMechanicId(),
             'mechanic_name' => $request->mechanic_name,
+            'nik' => $request->nik,
             'phone_number' => $request->phone_number,
+            'notes' => $request->notes,
         ]);
 
         return response()->json([
@@ -63,12 +67,16 @@ class MechanicController extends Controller
 
         $request->validate([
             'mechanic_name' => 'sometimes|required|string|max:100',
+            'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
         ]);
 
         $mechanic->update([
             'mechanic_name' => $request->mechanic_name ?? $mechanic->mechanic_name,
+            'nik' => $request->nik ?? $mechanic->nik,
             'phone_number' => $request->phone_number ?? $mechanic->phone_number,
+            'notes' => $request->notes ?? $mechanic->notes,
         ]);
 
         return response()->json([
