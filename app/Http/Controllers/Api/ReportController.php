@@ -321,22 +321,14 @@ class ReportController extends Controller
 
     public function favorites(Request $request)
     {
-        $paidQuery = Payment::where('payment_status', 'paid');
-
-        if ($request->start_date && $request->end_date) {
-            $paidQuery->whereBetween('payment_date', [
-                $request->start_date . ' 00:00:00',
-                $request->end_date . ' 23:59:59',
-            ]);
-        }
-
-        $paidOrderIds = $paidQuery->pluck('order_id');
-
-        $data = DB::table('order_details as od')
+        $query = DB::table('order_details as od')
+            ->join('payments as p', function ($join) {
+                $join->on('p.order_id', '=', 'od.order_id')
+                     ->where('p.payment_status', '=', 'paid');
+            })
             ->join('items as i', 'i.item_id', '=', 'od.item_id')
             ->join('item_categories as c', 'c.item_category_id', '=', 'i.item_category_id')
             ->join('item_types as t', 't.item_type_id', '=', 'c.item_type_id')
-            ->whereIn('od.order_id', $paidOrderIds)
             ->select(
                 'i.item_id',
                 'i.item_name',
@@ -346,13 +338,19 @@ class ReportController extends Controller
                 DB::raw('SUM(od.quantity * od.selling_price_at_transaction) as total_revenue')
             )
             ->groupBy('i.item_id', 'i.item_name', 'c.category_name', 't.type_name')
-            ->orderByDesc('total_qty')
-            ->get();
+            ->orderByDesc('total_qty');
+
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('p.payment_date', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59',
+            ]);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Produk favorit berhasil diambil',
-            'data' => $data,
+            'data' => $query->get(),
         ]);
     }
 }
