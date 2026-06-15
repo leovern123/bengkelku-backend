@@ -36,6 +36,7 @@ class SupplierController extends Controller
             'supplier_name' => 'required|string|max:100',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         $supplier = Supplier::create([
@@ -43,6 +44,7 @@ class SupplierController extends Controller
             'supplier_name' => $request->supplier_name,
             'phone_number' => $request->phone_number,
             'address' => $request->address,
+            'notes' => $request->notes,
         ]);
 
         return response()->json([
@@ -72,12 +74,14 @@ class SupplierController extends Controller
             'supplier_name' => 'sometimes|required|string|max:100',
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         $supplier->update([
             'supplier_name' => $request->supplier_name ?? $supplier->supplier_name,
             'phone_number' => $request->phone_number ?? $supplier->phone_number,
             'address' => $request->address ?? $supplier->address,
+            'notes' => $request->notes ?? $supplier->notes,
         ]);
 
         return response()->json([

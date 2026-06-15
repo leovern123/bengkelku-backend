@@ -1,10 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(sshpass -p 'Bengkel24@e' ssh -o StrictHostKeyChecking=no root@202.155.95.224 \"echo 'Koneksi berhasil' && lsb_release -a && php -v 2>/dev/null || echo 'PHP belum terinstall'\")"
+      "Bash(sshpass -p 'Bengkel24@e' ssh -o StrictHostKeyChecking=no root@202.155.95.224 \"echo 'Koneksi berhasil' && lsb_release -a && php -v 2>/dev/null || echo 'PHP belum terinstall'\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\User\\\\flutter\\\\bengkelku\\\\projek3-bengkel_app\\\\lib\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Head -50)",
+      "Bash(find \"C:\\\\Users\\\\User\\\\flutter\\\\bengkelku\\\\projek3-bengkel_app\\\\lib\" -type d | head -50)",
+      "Read(//c/Users/User/flutter/bengkelku/projek3-bengkel_app/lib/**)",
+      "Bash(mkdir -p \"C:/Users/User/flutter/bengkelku/bengkelku-app/lib/utils\" && echo \"done\")"
     ],
     "additionalDirectories": [
-      "C:\\Users\\User\\.claude\\projects\\c--Users-User-flutter-bengkelku-bengkelku-backend"
+      "C:\\Users\\User\\.claude\\projects\\c--Users-User-flutter-bengkelku-bengkelku-backend",
+      "C:\\Users\\User\\flutter\\bengkelku\\bengkelku-app\\lib\\utils",
+      "C:\\Users\\User\\flutter\\bengkelku\\bengkelku-app\\lib\\widgets"
     ]
   }
 }
