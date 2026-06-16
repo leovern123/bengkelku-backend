@@ -21,6 +21,7 @@ class Order extends Model
         'mechanic_id',
         'order_code',
         'order_status',
+        'cancel_reason',
         'total_amount',
     ];
 

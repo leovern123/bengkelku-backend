@@ -242,8 +242,12 @@ class OrderController extends Controller
         ]);
     }
 
-    public function cancel($id)
+    public function cancel($id, Request $request)
     {
+        $request->validate([
+            'cancel_reason' => 'required|string|max:1000',
+        ]);
+
         $order = Order::with('details.item')->findOrFail($id);
 
         if (in_array($order->order_status, ['completed', 'cancelled'])) {
@@ -267,6 +271,7 @@ class OrderController extends Controller
 
             $order->update([
                 'order_status' => 'cancelled',
+                'cancel_reason' => $request->cancel_reason,
             ]);
 
             DB::commit();
