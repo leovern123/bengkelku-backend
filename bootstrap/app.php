@@ -17,5 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ]);
 })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', '*');
+            $response->headers->set('Access-Control-Allow-Headers', '*');
+            return $response;
+        });
     })->create();
