@@ -20,7 +20,16 @@ class Mechanic extends Model
         'address',
         'specialization',
         'notes',
+        'photo',
     ];
+
+    protected $appends = ['photo_url'];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo) return null;
+        return url('storage/' . $this->photo);
+    }
 
     public function orders()
     {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Mechanic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MechanicController extends Controller
 {
@@ -33,7 +34,13 @@ class MechanicController extends Controller
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('mechanics', 'public');
+        }
 
         $mechanic = Mechanic::create([
             'mechanic_id' => $this->generateMechanicId(),
@@ -41,6 +48,7 @@ class MechanicController extends Controller
             'nik' => $request->nik,
             'phone_number' => $request->phone_number,
             'notes' => $request->notes,
+            'photo' => $photoPath,
         ]);
 
         return response()->json([
@@ -70,25 +78,38 @@ class MechanicController extends Controller
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $photoPath = $mechanic->photo;
+        if ($request->hasFile('photo')) {
+            if ($mechanic->photo) {
+                Storage::disk('public')->delete($mechanic->photo);
+            }
+            $photoPath = $request->file('photo')->store('mechanics', 'public');
+        }
 
         $mechanic->update([
             'mechanic_name' => $request->mechanic_name ?? $mechanic->mechanic_name,
             'nik' => $request->nik ?? $mechanic->nik,
             'phone_number' => $request->phone_number ?? $mechanic->phone_number,
             'notes' => $request->notes ?? $mechanic->notes,
+            'photo' => $photoPath,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Mekanik berhasil diperbarui',
-            'data' => $mechanic
+            'data' => $mechanic->fresh()
         ]);
     }
 
     public function destroy($id)
     {
         $mechanic = Mechanic::findOrFail($id);
+        if ($mechanic->photo) {
+            Storage::disk('public')->delete($mechanic->photo);
+        }
         $mechanic->delete();
 
         return response()->json([
