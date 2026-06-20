@@ -30,11 +30,15 @@ class MechanicController extends Controller
     private function saveBase64Photo(string $base64, string $photoName, ?string $oldPath = null): string
     {
         if ($oldPath) {
-            Storage::disk('public')->delete($oldPath);
+            $oldFull = storage_path('app/public/' . $oldPath);
+            if (file_exists($oldFull)) @unlink($oldFull);
         }
         $ext = strtolower(pathinfo($photoName, PATHINFO_EXTENSION)) ?: 'jpg';
         $filename = 'mechanics/' . uniqid() . '.' . $ext;
-        Storage::disk('public')->put($filename, base64_decode($base64));
+        $fullPath = storage_path('app/public/' . $filename);
+        $dir = dirname($fullPath);
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        file_put_contents($fullPath, base64_decode($base64));
         return $filename;
     }
 
