@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin saja
     Route::middleware('role:admin')->group(function () {
         Route::post('mechanics', [MechanicController::class, 'store']);
+        Route::post('mechanics/{mechanic}', [MechanicController::class, 'update']);
         Route::put('mechanics/{mechanic}', [MechanicController::class, 'update']);
         Route::patch('mechanics/{mechanic}', [MechanicController::class, 'update']);
         Route::delete('mechanics/{mechanic}', [MechanicController::class, 'destroy']);
