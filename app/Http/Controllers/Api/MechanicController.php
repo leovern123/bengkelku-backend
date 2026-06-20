@@ -27,6 +27,17 @@ class MechanicController extends Controller
         return 'MCN' . str_pad($num, 3, '0', STR_PAD_LEFT);
     }
 
+    private function saveBase64Photo(string $base64, string $photoName, ?string $oldPath = null): string
+    {
+        if ($oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+        $ext = strtolower(pathinfo($photoName, PATHINFO_EXTENSION)) ?: 'jpg';
+        $filename = 'mechanics/' . uniqid() . '.' . $ext;
+        Storage::disk('public')->put($filename, base64_decode($base64));
+        return $filename;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -34,12 +45,13 @@ class MechanicController extends Controller
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_base64' => 'nullable|string',
+            'photo_name' => 'nullable|string',
         ]);
 
         $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('mechanics', 'public');
+        if ($request->photo_base64) {
+            $photoPath = $this->saveBase64Photo($request->photo_base64, $request->photo_name ?? 'photo.jpg');
         }
 
         $mechanic = Mechanic::create([
@@ -78,15 +90,13 @@ class MechanicController extends Controller
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo_base64' => 'nullable|string',
+            'photo_name' => 'nullable|string',
         ]);
 
         $photoPath = $mechanic->photo;
-        if ($request->hasFile('photo')) {
-            if ($mechanic->photo) {
-                Storage::disk('public')->delete($mechanic->photo);
-            }
-            $photoPath = $request->file('photo')->store('mechanics', 'public');
+        if ($request->photo_base64) {
+            $photoPath = $this->saveBase64Photo($request->photo_base64, $request->photo_name ?? 'photo.jpg', $mechanic->photo);
         }
 
         $mechanic->update([
