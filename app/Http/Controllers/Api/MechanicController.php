@@ -48,6 +48,7 @@ class MechanicController extends Controller
             'mechanic_name' => 'required|string|max:100',
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'photo_base64' => 'nullable|string',
             'photo_name' => 'nullable|string',
@@ -63,6 +64,7 @@ class MechanicController extends Controller
             'mechanic_name' => $request->mechanic_name,
             'nik' => $request->nik,
             'phone_number' => $request->phone_number,
+            'address' => $request->address,
             'notes' => $request->notes,
             'photo' => $photoPath,
         ]);
@@ -93,6 +95,7 @@ class MechanicController extends Controller
             'mechanic_name' => 'sometimes|required|string|max:100',
             'nik' => 'nullable|string|max:20',
             'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'photo_base64' => 'nullable|string',
             'photo_name' => 'nullable|string',
@@ -108,6 +111,7 @@ class MechanicController extends Controller
             'nik' => $request->nik ?? $mechanic->nik,
             'phone_number' => $request->phone_number ?? $mechanic->phone_number,
             'notes' => $request->notes ?? $mechanic->notes,
+            'address' => $request->address ?? $mechanic->address,
             'photo' => $photoPath,
         ]);
 

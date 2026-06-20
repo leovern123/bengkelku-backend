@@ -28,7 +28,7 @@ class Mechanic extends Model
     public function getPhotoUrlAttribute(): ?string
     {
         if (!$this->photo) return null;
-        return url('storage/' . $this->photo);
+        return config('app.url') . '/storage/' . $this->photo;
     }
 
     public function orders()
