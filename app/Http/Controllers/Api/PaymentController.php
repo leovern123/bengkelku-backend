@@ -84,15 +84,6 @@ class PaymentController extends Controller
                 'order_status' => 'completed',
             ]);
 
-            $order->load('details.item');
-            foreach ($order->details as $detail) {
-                $item = $detail->item;
-                if ($item && $item->stock !== null) {
-                    $item->stock -= $detail->quantity;
-                    $item->save();
-                }
-            }
-
             DB::commit();
 
             $payment->load([
@@ -227,19 +218,9 @@ class PaymentController extends Controller
         DB::beginTransaction();
 
         try {
-            $order = Order::with('details.item')->findOrFail($payment->order_id);
+            $order = Order::findOrFail($payment->order_id);
 
             $payment->delete();
-
-            if ($payment->payment_status === 'paid') {
-                foreach ($order->details as $detail) {
-                    $item = $detail->item;
-                    if ($item && $item->stock !== null) {
-                        $item->stock += $detail->quantity;
-                        $item->save();
-                    }
-                }
-            }
 
             $order->update([
                 'order_status' => 'process',

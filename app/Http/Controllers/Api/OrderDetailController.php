@@ -58,6 +58,11 @@ class OrderDetailController extends Controller
                 'subtotal' => $item->selling_price * $request->quantity,
             ]);
 
+            if ($item->stock !== null) {
+                $item->stock -= $request->quantity;
+                $item->save();
+            }
+
             $total = OrderDetail::where('order_id', $request->order_id)->sum('subtotal');
             $order->update(['total_amount' => $total]);
 
@@ -113,6 +118,11 @@ class OrderDetailController extends Controller
                 'subtotal' => $item->selling_price * $request->quantity,
             ]);
 
+            if ($item->stock !== null) {
+                $item->stock -= $diff;
+                $item->save();
+            }
+
             $total = OrderDetail::where('order_id', $detail->order_id)->sum('subtotal');
             $order->update(['total_amount' => $total]);
 
@@ -148,6 +158,12 @@ class OrderDetailController extends Controller
 
         DB::beginTransaction();
         try {
+            $item = Item::find($detail->item_id);
+            if ($item && $item->stock !== null) {
+                $item->stock += $detail->quantity;
+                $item->save();
+            }
+
             $detail->delete();
 
             $total = OrderDetail::where('order_id', $order->order_id)->sum('subtotal');

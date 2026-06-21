@@ -164,13 +164,12 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            if ($order->order_status === 'completed') {
-                foreach ($order->details as $detail) {
-                    $item = $detail->item;
-                    if ($item && !is_null($item->stock)) {
-                        $item->stock += $detail->quantity;
-                        $item->save();
-                    }
+            foreach ($order->details as $detail) {
+                $item = $detail->item;
+
+                if ($item && !is_null($item->stock)) {
+                    $item->stock += $detail->quantity;
+                    $item->save();
                 }
             }
 
@@ -261,6 +260,15 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            foreach ($order->details as $detail) {
+                $item = $detail->item;
+
+                if ($item && !is_null($item->stock)) {
+                    $item->stock += $detail->quantity;
+                    $item->save();
+                }
+            }
+
             $order->update([
                 'order_status' => 'cancelled',
                 'cancel_reason' => $request->cancel_reason,
