@@ -102,7 +102,11 @@ class MechanicController extends Controller
         ]);
 
         $photoPath = $mechanic->photo;
-        if ($request->photo_base64) {
+        if ($request->remove_photo && $mechanic->photo) {
+            $oldFull = storage_path('app/public/' . $mechanic->photo);
+            if (file_exists($oldFull)) @unlink($oldFull);
+            $photoPath = null;
+        } elseif ($request->photo_base64) {
             $photoPath = $this->saveBase64Photo($request->photo_base64, $request->photo_name ?? 'photo.jpg', $mechanic->photo);
         }
 
@@ -125,9 +129,17 @@ class MechanicController extends Controller
     public function destroy($id)
     {
         $mechanic = Mechanic::findOrFail($id);
+
+        // Hapus foto jika ada
         if ($mechanic->photo) {
-            Storage::disk('public')->delete($mechanic->photo);
+            $oldFull = storage_path('app/public/' . $mechanic->photo);
+            if (file_exists($oldFull)) @unlink($oldFull);
         }
+
+        // Set mechanic_id ke null pada pesanan terkait sebelum menghapus
+        // (backup jika onDelete('set null') di migration tidak aktif)
+        $mechanic->orders()->update(['mechanic_id' => null]);
+
         $mechanic->delete();
 
         return response()->json([
