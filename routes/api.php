@@ -13,18 +13,6 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\OrderDetailController;
-use Illuminate\Support\Facades\Storage;
-
-// Public image proxy for web (avoids CORS issues)
-Route::get('image/{path}', function ($path) {
-    $fullPath = 'public/storage/' . $path;
-    if (Storage::exists($fullPath)) {
-        $file = Storage::get($fullPath);
-        $mimeType = Storage::mimeType($fullPath);
-        return response($file, 200)->header('Content-Type', $mimeType);
-    }
-    return response()->json(['error' => 'Not found'], 404);
-})->withoutMiddleware(['auth:sanctum']);
 
 Route::post('login', [AuthController::class, 'login']);
 
